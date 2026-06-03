@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import re
+import socket
 import urllib.error
 import urllib.request
 from datetime import datetime
@@ -95,7 +96,7 @@ def mock_extract_key_points(course_text: str) -> list[str]:
 
 
 def mock_answer_question(course_text: str, question: str) -> str:
-    """Simulate an AI answer based on the course material and user question."""
+    """Simulate an AI answer based on notes, with a simple general fallback."""
     question = question.strip()
     if not question:
         return "未检测到有效问题，请重新输入学习问题。"
@@ -119,8 +120,9 @@ def mock_answer_question(course_text: str, question: str) -> str:
         )
 
     return (
-        "当前课程资料中没有找到与该问题直接对应的内容。"
-        "建议补充更完整的课程笔记或教材片段后再次提问。"
+        "课程资料中没有找到与该问题直接对应的内容。"
+        "如果使用豆包 API 模式，系统会基于通用知识继续提供解答；"
+        "当前 mock 模式仅能给出有限的演示回答。"
     )
 
 
@@ -189,16 +191,30 @@ def call_doubao_agent(course_text: str, question: str, model: str) -> dict:
     if not api_key:
         raise RuntimeError("未检测到 ARK_API_KEY 环境变量，无法调用豆包 API。")
 
-    prompt = f"""你是一个课程资料智能问答与学习总结助手。
+    prompt = f"""你是一个“深度课程助教型”AI 智能体，目标不是简单复述资料，而是帮助学生真正理解课程内容。
 
-请严格根据给定课程资料回答学生问题，输出 JSON，不要输出 Markdown 代码块。
+请根据以下规则回答学生问题：
+1. 如果学生问题与课程资料相关，必须优先结合课程资料回答，再使用通用知识进行补充解释。
+2. 如果课程资料没有覆盖该问题，允许使用你的通用知识进行解答，但必须在 answer 开头说明：“课程资料未覆盖该问题，以下为通用解答：”。
+3. 不要因为资料中没有完全相同的原句就拒绝回答；只要概念相关，就应该结合资料进行推理和讲解。
+4. 回答要适合大学课程学习场景，不能只给一句话结论，要帮助学生理解“是什么、为什么、怎么用、容易和什么混淆”。
+5. 输出必须是 JSON，不要输出 Markdown 代码块，不要在 JSON 外添加任何解释。
 
 JSON 格式如下：
 {{
-  "summary": "课程资料摘要，100-180字",
-  "key_points": ["知识点1", "知识点2", "知识点3"],
-  "answer": "针对学生问题的回答",
-  "review_plan": ["复习建议1", "复习建议2", "复习建议3"]
+  "summary": "课程资料摘要，150-260字。要说明本资料主要讲了什么、各部分之间有什么关系。",
+  "key_points": [
+    "知识点1：用一句话解释含义和学习价值",
+    "知识点2：用一句话解释含义和学习价值",
+    "知识点3：用一句话解释含义和学习价值"
+  ],
+  "answer": "针对学生问题的深度回答，建议 500-900 字。必须包含：1. 直接结论；2. 课程资料依据；3. 分点解释；4. 一个具体例子；5. 易混点或常见误区；6. 最后用一句话总结。可以在字符串中使用换行和编号。",
+  "review_plan": [
+    "复习建议1：说明先复习什么以及为什么",
+    "复习建议2：说明如何自测",
+    "复习建议3：说明如何用案例巩固",
+    "复习建议4：指出容易混淆的地方"
+  ]
 }}
 
 课程资料：
@@ -213,11 +229,15 @@ JSON 格式如下：
         "messages": [
             {
                 "role": "system",
-                "content": "你是严谨的课程学习助手，只根据资料进行总结和回答。",
+                "content": (
+                    "你是严谨、耐心、讲解深入的大学课程助教。回答要有教学价值，"
+                    "优先基于课程资料，同时可以用通用知识补充背景、例子和辨析。"
+                ),
             },
             {"role": "user", "content": prompt},
         ],
-        "temperature": 0.2,
+        "temperature": 0.35,
+        "max_tokens": 2000,
         "response_format": {"type": "json_object"},
     }
     request = urllib.request.Request(
@@ -231,13 +251,17 @@ JSON 格式如下：
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=60) as response:
+        with urllib.request.urlopen(request, timeout=120) as response:
             response_data = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as error:
         error_body = error.read().decode("utf-8", errors="ignore")
         raise RuntimeError(f"豆包 API HTTP 错误：{error.code} {error_body}") from error
     except urllib.error.URLError as error:
         raise RuntimeError(f"豆包 API 网络连接失败：{error.reason}") from error
+    except TimeoutError as error:
+        raise RuntimeError("豆包 API 响应超时，请稍后重试或减少问题复杂度。") from error
+    except socket.timeout as error:
+        raise RuntimeError("豆包 API 响应超时，请稍后重试或减少问题复杂度。") from error
 
     try:
         content = response_data["choices"][0]["message"]["content"].strip()
