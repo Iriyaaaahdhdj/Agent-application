@@ -7,6 +7,8 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
+from feishu_notify import notify_from_report
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_NOTES_FILE = BASE_DIR / "data" / "sample_course_notes.md"
@@ -396,6 +398,18 @@ def parse_args() -> argparse.Namespace:
         default=os.getenv("ARK_MODEL", DEFAULT_ARK_MODEL),
         help="火山方舟模型 ID，默认 doubao-seed-2-0-lite-260215。",
     )
+    parser.add_argument(
+        "--notify",
+        choices=["auto", "mock", "webhook", "none"],
+        default="auto",
+        help="飞书通知模式：auto 自动选择，mock 打印预览，webhook 发送飞书，none 跳过。",
+    )
+    parser.add_argument(
+        "--feishu-webhook",
+        type=str,
+        default="",
+        help="飞书机器人 Webhook 地址。也可通过 FEISHU_WEBHOOK_URL 环境变量配置。",
+    )
     return parser.parse_args()
 
 
@@ -413,6 +427,21 @@ def main() -> None:
     print(f"学习报告已保存到：{args.output}")
     print("\n--- 报告预览 ---")
     print(report)
+
+    try:
+        notify_mode, notify_result = notify_from_report(
+            report_path=args.output,
+            webhook_url=args.feishu_webhook,
+            mode=args.notify,
+        )
+    except RuntimeError as error:
+        print(f"飞书通知失败：{error}")
+        return
+
+    if notify_mode == "webhook":
+        print(notify_result)
+    elif notify_mode == "none":
+        print(notify_result)
 
 
 if __name__ == "__main__":

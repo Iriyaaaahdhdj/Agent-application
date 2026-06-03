@@ -280,6 +280,32 @@ python main.py
 outputs/summary_report.md
 ```
 
+飞书通知 mock 模式：
+
+```bash
+python main.py --provider mock --notify mock --question "什么是智能体？"
+```
+
+配置飞书机器人 Webhook。PowerShell 示例：
+
+```powershell
+$env:FEISHU_WEBHOOK_URL="你的飞书机器人 Webhook 地址"
+```
+
+发送到飞书群：
+
+```bash
+python main.py --provider auto --notify webhook --question "什么是智能体？"
+```
+
+如果使用 `--notify auto`，程序会自动判断：检测到飞书 Webhook 时发送到飞书群，否则打印 mock 通知预览。
+
+跳过飞书通知：
+
+```bash
+python main.py --notify none --question "什么是智能体？"
+```
+
 ## 十三、项目目录结构
 
 ```text
