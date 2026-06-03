@@ -223,7 +223,41 @@ CLI 的作用包括：
 - GitHub：项目代码和文档提交
 - 可选大模型 API：用于摘要、问答和复习建议生成
 
-## 十二、项目目录结构
+## 十二、运行方式
+
+当前版本使用 Python 标准库和模拟 AI 函数实现，无需配置真实大模型 API，适合课程展示和功能演示。
+
+安装依赖：
+
+```bash
+pip install -r requirements.txt
+```
+
+使用默认课程资料运行：
+
+```bash
+python main.py --question "智能体和普通聊天机器人的区别是什么？"
+```
+
+指定课程资料文件运行：
+
+```bash
+python main.py --file data/sample_course_notes.md --question "智能体的核心组成是什么？"
+```
+
+如果不在命令中填写问题，也可以直接运行：
+
+```bash
+python main.py
+```
+
+程序会在命令行提示用户输入学习问题。运行完成后，学习报告会保存到：
+
+```text
+outputs/summary_report.md
+```
+
+## 十三、项目目录结构
 
 ```text
 Agent-application/
@@ -242,7 +276,7 @@ Agent-application/
     └── test_basic.py
 ```
 
-## 十三、GitHub 仓库提交内容
+## 十四、GitHub 仓库提交内容
 
 最终提交到 GitHub 仓库的内容应包括：
 
@@ -256,7 +290,7 @@ Agent-application/
 8. 依赖文件，例如 `requirements.txt`，方便他人安装依赖并运行项目。
 9. 运行截图或展示说明，可以在 README 或 docs 中展示 CLI 运行结果、报告生成结果、飞书通知结果等。
 
-## 十四、项目预期效果
+## 十五、项目预期效果
 
 完成后，本项目可以实现以下效果：
 
@@ -269,7 +303,7 @@ Agent-application/
 - 系统通过飞书进行通知或模拟通知
 - 用户可以通过 CLI 完成完整运行流程
 
-## 十五、项目总结
+## 十六、项目总结
 
 “课程资料智能问答与学习总结助手”将 AI 智能体应用于真实学习场景，解决学生在课程资料整理、知识点复习和问题查找中的低效问题。
 
