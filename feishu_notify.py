@@ -31,8 +31,10 @@ def extract_markdown_section(markdown: str, heading: str) -> str:
 def build_feishu_message(report: str) -> str:
     """Build a concise Feishu text message from the study report."""
     question = extract_markdown_section(report, "用户问题")
-    summary = extract_markdown_section(report, "资料摘要")
-    key_points = extract_markdown_section(report, "核心知识点")
+    question_type = extract_markdown_section(report, "问题类型")
+    summary = extract_markdown_section(report, "针对本问题的资料摘要")
+    key_points = extract_markdown_section(report, "针对本问题的核心知识点")
+    adaptation_plan = extract_markdown_section(report, "智能体适应方案")
     review_plan = extract_markdown_section(report, "复习计划")
 
     return f"""【课程学习总结通知】
@@ -40,11 +42,17 @@ def build_feishu_message(report: str) -> str:
 问题：
 {question}
 
+问题类型：
+{question_type}
+
 资料摘要：
 {summary}
 
 核心知识点：
 {key_points}
+
+智能体适应方案：
+{adaptation_plan}
 
 复习建议：
 {review_plan}
