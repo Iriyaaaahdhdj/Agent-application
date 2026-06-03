@@ -225,7 +225,10 @@ CLI 的作用包括：
 
 ## 十二、运行方式
 
-当前版本使用 Python 标准库和模拟 AI 函数实现，无需配置真实大模型 API，适合课程展示和功能演示。
+当前版本支持两种运行模式：
+
+- `mock`：本地模拟 AI 函数，无需真实大模型 API，适合课程展示和离线演示。
+- `ark`：调用火山方舟豆包 API，使用真实大模型生成摘要、知识点、回答和复习计划。
 
 安装依赖：
 
@@ -233,10 +236,30 @@ CLI 的作用包括：
 pip install -r requirements.txt
 ```
 
+使用 mock 模式运行：
+
+```bash
+python main.py --provider mock --question "智能体和普通聊天机器人的区别是什么？"
+```
+
+配置豆包 API Key。PowerShell 示例：
+
+```powershell
+$env:ARK_API_KEY="你的豆包或火山方舟 API Key"
+```
+
+使用豆包 API 运行：
+
+```bash
+python main.py --provider ark --question "智能体和普通聊天机器人的区别是什么？"
+```
+
+如果使用 `auto` 模式，程序会自动判断：检测到 `ARK_API_KEY` 时调用豆包 API，否则使用 mock 模式。
+
 使用默认课程资料运行：
 
 ```bash
-python main.py --question "智能体和普通聊天机器人的区别是什么？"
+python main.py --provider auto --question "智能体和普通聊天机器人的区别是什么？"
 ```
 
 指定课程资料文件运行：

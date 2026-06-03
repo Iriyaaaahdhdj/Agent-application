@@ -1,11 +1,18 @@
 import argparse
+import json
+import os
 import re
+import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
 
-DEFAULT_NOTES_FILE = Path("data/sample_course_notes.md")
-DEFAULT_OUTPUT_FILE = Path("outputs/summary_report.md")
+BASE_DIR = Path(__file__).resolve().parent
+DEFAULT_NOTES_FILE = BASE_DIR / "data" / "sample_course_notes.md"
+DEFAULT_OUTPUT_FILE = BASE_DIR / "outputs" / "summary_report.md"
+ARK_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+DEFAULT_ARK_MODEL = "doubao-seed-2-0-lite-260215"
 
 
 def read_course_notes(file_path: Path) -> str:
@@ -174,12 +181,118 @@ def mock_generate_review_plan(key_points: list[str], question: str) -> list[str]
     ]
 
 
+def call_doubao_agent(course_text: str, question: str, model: str) -> dict:
+    """Call Doubao through Volcengine Ark's chat completions API."""
+    api_key = os.getenv("ARK_API_KEY")
+    if not api_key:
+        raise RuntimeError("未检测到 ARK_API_KEY 环境变量，无法调用豆包 API。")
+
+    prompt = f"""你是一个课程资料智能问答与学习总结助手。
+
+请严格根据给定课程资料回答学生问题，输出 JSON，不要输出 Markdown 代码块。
+
+JSON 格式如下：
+{{
+  "summary": "课程资料摘要，100-180字",
+  "key_points": ["知识点1", "知识点2", "知识点3"],
+  "answer": "针对学生问题的回答",
+  "review_plan": ["复习建议1", "复习建议2", "复习建议3"]
+}}
+
+课程资料：
+{course_text}
+
+学生问题：
+{question}
+"""
+
+    payload = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "你是严谨的课程学习助手，只根据资料进行总结和回答。",
+            },
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.2,
+        "response_format": {"type": "json_object"},
+    }
+    request = urllib.request.Request(
+        url=f"{ARK_BASE_URL}/chat/completions",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=60) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"豆包 API HTTP 错误：{error.code} {error_body}") from error
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"豆包 API 网络连接失败：{error.reason}") from error
+
+    try:
+        content = response_data["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, TypeError) as error:
+        raise RuntimeError(f"豆包 API 返回结构异常：{response_data}") from error
+
+    try:
+        result = json.loads(content)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"豆包 API 返回内容不是有效 JSON：{content}") from error
+
+    required_fields = {"summary", "key_points", "answer", "review_plan"}
+    if not required_fields.issubset(result):
+        raise RuntimeError("豆包 API 返回字段不完整。")
+
+    return result
+
+
+def generate_with_mock(course_text: str, question: str) -> dict:
+    """Generate assistant result with local mock functions."""
+    key_points = mock_extract_key_points(course_text)
+    return {
+        "summary": mock_generate_summary(course_text),
+        "key_points": key_points,
+        "answer": mock_answer_question(course_text, question),
+        "review_plan": mock_generate_review_plan(key_points, question),
+    }
+
+
+def generate_agent_result(
+    course_text: str,
+    question: str,
+    provider: str,
+    model: str,
+) -> tuple[dict, str]:
+    """Generate result with Doubao API or local mock fallback."""
+    if provider == "mock":
+        return generate_with_mock(course_text, question), "mock"
+
+    if provider == "ark" or os.getenv("ARK_API_KEY"):
+        try:
+            return call_doubao_agent(course_text, question, model), "ark"
+        except RuntimeError as error:
+            if provider == "ark":
+                raise
+            print(f"豆包 API 调用失败，已切换为 mock 模式：{error}")
+
+    return generate_with_mock(course_text, question), "mock"
+
+
 def build_report(
     question: str,
     summary: str,
     key_points: list[str],
     answer: str,
     review_plan: list[str],
+    provider: str,
 ) -> str:
     """Build the final Markdown study report."""
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -189,6 +302,10 @@ def build_report(
 ## 生成时间
 
 {generated_at}
+
+## 生成模式
+
+{provider}
 
 ## 用户问题
 
@@ -218,7 +335,13 @@ def save_report(report: str, output_path: Path) -> None:
     output_path.write_text(report, encoding="utf-8")
 
 
-def run_assistant(notes_file: Path, question: str, output_file: Path) -> str:
+def run_assistant(
+    notes_file: Path,
+    question: str,
+    output_file: Path,
+    provider: str,
+    model: str,
+) -> str:
     """Run the course QA assistant workflow."""
     raw_text = read_course_notes(notes_file)
     course_text = clean_text(raw_text)
@@ -228,11 +351,15 @@ def run_assistant(notes_file: Path, question: str, output_file: Path) -> str:
     if not question.strip():
         raise ValueError("用户问题为空，请输入一个明确的学习问题。")
 
-    summary = mock_generate_summary(course_text)
-    key_points = mock_extract_key_points(course_text)
-    answer = mock_answer_question(course_text, question)
-    review_plan = mock_generate_review_plan(key_points, question)
-    report = build_report(question, summary, key_points, answer, review_plan)
+    result, used_provider = generate_agent_result(course_text, question, provider, model)
+    report = build_report(
+        question=question,
+        summary=result["summary"],
+        key_points=result["key_points"],
+        answer=result["answer"],
+        review_plan=result["review_plan"],
+        provider=used_provider,
+    )
     save_report(report, output_file)
     return report
 
@@ -257,6 +384,18 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT_FILE,
         help="学习报告输出路径，默认 outputs/summary_report.md",
     )
+    parser.add_argument(
+        "--provider",
+        choices=["auto", "mock", "ark"],
+        default="auto",
+        help="模型提供方：auto 自动选择，mock 本地模拟，ark 调用豆包 API。",
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=os.getenv("ARK_MODEL", DEFAULT_ARK_MODEL),
+        help="火山方舟模型 ID，默认 doubao-seed-2-0-lite-260215。",
+    )
     return parser.parse_args()
 
 
@@ -265,8 +404,8 @@ def main() -> None:
     question = args.question.strip() or input("请输入你的学习问题：").strip()
 
     try:
-        report = run_assistant(args.file, question, args.output)
-    except (FileNotFoundError, ValueError) as error:
+        report = run_assistant(args.file, question, args.output, args.provider, args.model)
+    except (FileNotFoundError, ValueError, RuntimeError) as error:
         print(f"运行失败：{error}")
         return
 
