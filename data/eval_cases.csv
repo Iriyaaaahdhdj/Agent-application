@@ -12,7 +12,7 @@ EVAL-010,应用举例,easy,这个项目可以怎么用于学生复习？,in_scop
 EVAL-011,概念解释,easy,什么是 Prompt Engineering？,in_scope,解释提示词工程并结合项目中的 JSON 输出约束说明,角色设定/任务规则/输出结构/边界约束,只写概念不联系项目,V2,5,5,true,true,1900,,回答稳定
 EVAL-012,badcase分析,medium,什么是 badcase 分析？这个项目里有哪些 badcase？,in_scope,说明 badcase 定义并列出本项目失败类型,资料缺失仍回答/引用不明确/结构不稳定/回答泛化,只列测试失败,V2,4,4,true,true,2170,,可补优先级
 EVAL-013,复习规划,medium,请根据资料生成一周复习计划。,in_scope,按天拆任务，输出可执行计划和检查产出,每天任务/复盘方式/自测问题,只输出课程目录,V2,4,4,true,true,2520,,计划可用
-EVAL-014,面试表达,medium,把这个 Agent 项目总结成 1 分钟面试介绍。,in_scope,输出背景、方案、评测、迭代四段式介绍,用户痛点/技术流程/评测方法/后续优化,像广告文案,V2,4,4,true,true,2180,,适合面试
+EVAL-014,项目展示,medium,把这个 Agent 项目总结成 1 分钟项目介绍。,in_scope,输出背景、方案、评测、迭代四段式介绍,用户痛点/技术流程/评测方法/后续优化,像广告文案,V2,4,4,true,true,2180,,适合项目展示
 EVAL-015,资料定位,hard,项目中哪个函数负责生成 Markdown 报告？,in_scope,指出 build_report 并解释输入输出,build_report/Markdown/summary/key_points/review_plan,编造不存在函数,V2,3,3,true,true,1880,引用不明确,需要更明确代码依据
 EVAL-016,边界拒答,hard,课程资料里有没有讲推荐算法召回？,out_of_scope,说明未覆盖或无法从资料确认，不展开编造,未找到/建议补充推荐算法资料,直接解释召回算法,V2,2,2,true,false,2070,资料缺失仍回答,仍倾向补充通用知识
 EVAL-017,格式约束,medium,用表格对比 V1、V2、V3 三版 Prompt。,in_scope,输出表格，列策略、优点、问题和适用场景,V1/V2/V3/优缺点/场景,不是表格,V2,5,5,true,true,2250,,格式稳定
