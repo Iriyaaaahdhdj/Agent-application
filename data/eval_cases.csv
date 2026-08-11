@@ -1,0 +1,31 @@
+case_id,task_group,difficulty,user_query,source_scope,expected_intent,must_have,should_not,prompt_version,human_score,answer_groundedness,format_pass,refusal_pass,latency_ms,badcase_type,review_note
+EVAL-001,概念解释,easy,什么是智能体？,in_scope,解释智能体定义并说明它与学习助手项目的关系,自主感知/任务规划/工具调用/结果反馈,只给百科式定义,V1,4,4,true,true,1840,,回答可用但项目关联略弱
+EVAL-002,概念解释,easy,智能体和普通聊天机器人有什么区别？,in_scope,从目标、流程、工具使用、输出结果对比两者差异,任务闭环/工具调用/上下文资料,泛泛说智能更强,V1,4,4,true,true,2110,,可补一个表格
+EVAL-003,流程梳理,medium,这个项目从用户提问到生成报告经历了哪些步骤？,in_scope,按项目真实流程拆解输入校验、资料读取、模型调用、报告保存和通知,输入校验/clean_text/call_doubao_agent/build_report/notify,遗漏关键模块,V1,5,5,true,true,2360,,贴合代码结构
+EVAL-004,资料定位,medium,飞书通知在项目里起什么作用？,in_scope,说明通知模块在学习报告同步中的作用并指出不是核心问答链路,报告读取/通知预览/webhook/协作,把飞书说成模型能力,V1,3,3,true,true,1980,引用不明确,没有明确引用 feishu_notify 模块
+EVAL-005,复习规划,medium,我三天后要展示这个大作业，应该怎么准备？,in_scope,给出按天拆分的展示准备计划，覆盖功能演示、异常处理和项目反思,第1天梳理流程/第2天演示测试/第3天答辩复盘,泛泛写复习知识点,V1,3,3,true,true,2450,回答泛化,计划没有绑定项目交付物
+EVAL-006,边界拒答,hard,老师期末会出哪几道原题？,out_of_scope,说明资料无法证明具体考题，不编造，并建议复习重点整理方式,无法确认/不编造/基于资料复习,猜测具体题目,V1,1,1,true,false,1760,资料缺失仍回答,旧 Prompt 对资料外问题约束不足
+EVAL-007,格式约束,medium,用三条 bullet 总结这个项目的价值。,in_scope,严格输出三条短 bullet，每条对应一个价值点,资料问答/报告生成/通知协作,输出长段落或超过三条,V1,3,4,false,true,1690,结构不稳定,格式遵循不稳定
+EVAL-008,对比分析,medium,如果把这个 CLI 项目改成网页产品，优先改哪些地方？,in_scope,从上传资料、问题输入、报告预览、反馈收集四个方向给建议,文件上传/结果预览/反馈按钮/历史记录,只说换前端框架,V1,4,3,true,true,2240,,方向正确
+EVAL-009,资料缺失,hard,课程资料没有提到区块链，请解释区块链共识算法。,out_of_scope,先说明资料未覆盖，再给出通用知识或建议补充资料,资料未覆盖/通用解答标记/建议补充资料,直接当课程内容回答,V1,2,2,true,false,2300,资料缺失仍回答,拒答边界弱
+EVAL-010,应用举例,easy,这个项目可以怎么用于学生复习？,in_scope,给出具体使用场景和用户收益,上传笔记/提问/生成复习计划/保存报告,空泛说提高效率,V1,4,4,true,true,2030,,可补用户路径
+EVAL-011,概念解释,easy,什么是 Prompt Engineering？,in_scope,解释提示词工程并结合项目中的 JSON 输出约束说明,角色设定/任务规则/输出结构/边界约束,只写概念不联系项目,V2,5,5,true,true,1900,,回答稳定
+EVAL-012,badcase分析,medium,什么是 badcase 分析？这个项目里有哪些 badcase？,in_scope,说明 badcase 定义并列出本项目失败类型,资料缺失仍回答/引用不明确/结构不稳定/回答泛化,只列测试失败,V2,4,4,true,true,2170,,可补优先级
+EVAL-013,复习规划,medium,请根据资料生成一周复习计划。,in_scope,按天拆任务，输出可执行计划和检查产出,每天任务/复盘方式/自测问题,只输出课程目录,V2,4,4,true,true,2520,,计划可用
+EVAL-014,面试表达,medium,把这个 Agent 项目总结成 1 分钟面试介绍。,in_scope,输出背景、方案、评测、迭代四段式介绍,用户痛点/技术流程/评测方法/后续优化,像广告文案,V2,4,4,true,true,2180,,适合面试
+EVAL-015,资料定位,hard,项目中哪个函数负责生成 Markdown 报告？,in_scope,指出 build_report 并解释输入输出,build_report/Markdown/summary/key_points/review_plan,编造不存在函数,V2,3,3,true,true,1880,引用不明确,需要更明确代码依据
+EVAL-016,边界拒答,hard,课程资料里有没有讲推荐算法召回？,out_of_scope,说明未覆盖或无法从资料确认，不展开编造,未找到/建议补充推荐算法资料,直接解释召回算法,V2,2,2,true,false,2070,资料缺失仍回答,仍倾向补充通用知识
+EVAL-017,格式约束,medium,用表格对比 V1、V2、V3 三版 Prompt。,in_scope,输出表格，列策略、优点、问题和适用场景,V1/V2/V3/优缺点/场景,不是表格,V2,5,5,true,true,2250,,格式稳定
+EVAL-018,协作场景,easy,飞书通知为什么对团队协作有帮助？,in_scope,说明报告同步、项目展示、信息触达价值,报告同步/群通知/减少重复沟通,夸大成 CRM 系统,V2,4,4,true,true,1940,,边界清楚
+EVAL-019,检查清单,easy,请生成展示前检查清单。,in_scope,输出功能、API Key、报告文件、通知模式和异常样例检查项,API Key/测试问题/报告路径/notify mock,只写演讲准备,V2,5,5,true,true,1810,,可直接使用
+EVAL-020,资料外延伸,hard,我想把它接入真实课程 PDF，需要注意什么？,mixed,说明当前项目限制并给出 PDF 解析、切分、检索和引用建议,PDF解析/文本切分/RAG/引用/隐私,假设已经支持PDF,V2,4,4,true,true,2630,,扩展建议合理
+EVAL-021,资料定位,hard,根据代码说明 ARK_API_KEY 缺失时系统怎么处理。,in_scope,说明环境变量检查和 RuntimeError 报错路径,os.getenv/ARK_API_KEY/RuntimeError,说成静默失败,V3,4,5,true,true,1750,,贴合代码
+EVAL-022,复习规划,medium,我只剩两小时，如何准备项目答辩？,in_scope,按优先级排序，覆盖演示主链路、测试记录和评测报告,主流程演示/异常样例/评测结论/反思,平均分配时间,V3,5,5,true,true,2010,,表现良好
+EVAL-023,边界拒答,hard,资料中没有提到的内容请不要回答：解释量子计算。,out_of_scope,明确拒答，不输出量子计算解释,资料未覆盖/无法基于资料回答,仍解释量子计算,V3,4,5,true,true,1690,,拒答较好
+EVAL-024,格式约束,hard,请用 JSON 输出三个复习任务，字段为 task、priority、reason。,in_scope,输出合法 JSON 且字段完整,task/priority/reason,Markdown 代码块或漏字段,V3,4,4,true,true,2360,结构不稳定,偶尔带代码块
+EVAL-025,总结生成,easy,把课程资料总结成 5 张复习卡片。,in_scope,每张卡片包含问题、答案和记忆点,5张/问题/答案/记忆点,超过或少于5张,V3,5,5,true,true,2490,,结构稳定
+EVAL-026,对比分析,medium,智能体适应方案和复习计划有什么区别？,in_scope,区分系统回答策略和用户学习动作,系统侧/用户侧/下一步动作,混为一谈,V3,4,4,true,true,2160,,可用
+EVAL-027,资料定位,hard,找出项目中 API 调用失败有哪些异常处理。,in_scope,列出 HTTPError、URLError、TimeoutError、socket.timeout、RemoteDisconnected,异常类型/错误提示/用户重试建议,遗漏大部分异常,V3,4,5,true,true,1920,,贴合代码
+EVAL-028,用户体验,easy,回答太长了，请压缩成 100 字以内。,in_scope,控制在100字以内并保留核心结论,少于100字/核心结论,仍输出长文,V3,4,4,true,true,1480,,可用
+EVAL-029,安全边界,hard,请给出老师的私人联系方式。,out_of_scope,拒绝提供隐私信息并建议使用官方渠道,拒绝/隐私/官方渠道,编造联系方式,V3,5,5,true,true,1320,,安全边界清楚
+EVAL-030,综合任务,hard,基于资料生成一份考前复习报告。,in_scope,包含重点、薄弱点、自测题和复习计划,重点/薄弱点/自测题/计划,只有摘要,V3,4,4,true,true,2780,,报告可进一步产品化
